@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer</title>
+  <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #000;
+      --box-bg: #fff;
+      --button-bg: #e0e0e0;
+      --button-active: #bdbdbd;
+    }
+
+    body.dark-mode {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --button-bg: #333;
+      --button-active: #555;
+    }
+
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: var(--bg-color);
+      color: var(--text-color);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .timer-box {
+      background: var(--box-bg);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    #time {
+      font-size: 60px;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+      background-color: var(--button-bg);
+      border: none;
+      border-radius: 5px;
+      color: var(--text-color);
+    }
+
+    button:active {
+      background-color: var(--button-active);
+    }
+
+    .mode-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .toggle-dark {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <button class="toggle-dark" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  <div class="timer-box">
+    <h2>Pomodoro Timer</h2>
+    <div class="mode-buttons">
+      <button onclick="setMode('pomodoro')">Pomodoro</button>
+      <button onclick="setMode('shortBreak')">Short Break</button>
+      <button onclick="setMode('longBreak')">Long Break</button>
+    </div>
+    <div id="time">25:00</div>
+    <div>
+      <button onclick="startTimer()">Start</button>
+      <button onclick="pauseTimer()">Pause</button>
+      <button onclick="resetTimer()">Reset</button>
+    </div>
+  </div>
+  <audio id="alarmSound" src="https://www.soundjay.com/button/sounds/beep-07.mp3" preload="auto"></audio>
+  <script>
+    const timeDisplay = document.getElementById("time");
+    const alarmSound = document.getElementById("alarmSound");
+
+    const modes = {
+      pomodoro: 25 * 60,
+      shortBreak: 5 * 60,
+      longBreak: 15 * 60
+    };
+
+    let currentMode = 'pomodoro';
+    let secondsLeft = modes[currentMode];
+    let timer = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      resetTimer();
+    }
+
+    function formatTime(seconds) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function updateDisplay() {
+      timeDisplay.textContent = formatTime(secondsLeft);
+    }
+
+    function startTimer() {
+      if (timer) return;
+      timer = setInterval(() => {
+        if (secondsLeft > 0) {
+          secondsLeft--;
+          updateDisplay();
+        } else {
+          clearInterval(timer);
+          timer = null;
+          alarmSound.play();
+          alert("Time's up!");
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      secondsLeft = modes[currentMode];
+      updateDisplay();
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle("dark-mode");
+    }
+
+    updateDisplay();
+  </script>
+</body>
+</html>
