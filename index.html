@@ -6,7 +6,6 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-2N4DJX0R4B');
   </script>
   <meta charset="UTF-8">
@@ -51,6 +50,8 @@
     #time {
       font-size: 60px;
       margin: 20px 0;
+      cursor: pointer;
+      outline: none;
     }
 
     button {
@@ -93,7 +94,7 @@
       <button onclick="setMode('shortBreak')">Short Break</button>
       <button onclick="setMode('longBreak')">Long Break</button>
     </div>
-    <div id="time">25:00</div>
+    <div id="time" contenteditable="true" onblur="saveEditedTime()" onkeydown="handleTimeKey(event)" title="Click to edit">25:00</div>
     <div>
       <button onclick="startTimer()">Start</button>
       <button onclick="pauseTimer()">Pause</button>
@@ -158,6 +159,32 @@
 
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
+    }
+
+    function handleTimeKey(event) {
+      if (event.key === "Enter") {
+        event.preventDefault(); // prevent newline
+        timeDisplay.blur();     // triggers saveEditedTime()
+      }
+    }
+
+    function saveEditedTime() {
+      const text = timeDisplay.textContent.trim();
+      const match = text.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) {
+        updateDisplay(); // reset if invalid
+        return;
+      }
+
+      const mins = parseInt(match[1], 10);
+      const secs = parseInt(match[2], 10);
+      if (isNaN(mins) || isNaN(secs) || secs > 59) {
+        updateDisplay(); // reset if invalid
+        return;
+      }
+
+      secondsLeft = mins * 60 + secs;
+      updateDisplay();
     }
 
     updateDisplay();
