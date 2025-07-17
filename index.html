@@ -98,8 +98,17 @@
     .mode-buttons {
       display: flex;
       justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .preset-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
     .toggle-dark {
@@ -121,11 +130,19 @@
   <div class="main-content">
     <div class="timer-box">
       <h2 id="timerTitle" style="font-size: 32px;">Pomodoro Timer</h2>
+      
       <div class="mode-buttons">
         <button onclick="startTimer()">Start</button>
         <button onclick="pauseTimer()">Pause</button>
         <button onclick="resetTimer()">Reset</button>
       </div>
+
+      <div class="preset-buttons" id="presetButtons" style="display: none;">
+        <button onclick="setPomodoro()">Pomodoro</button>
+        <button onclick="setShortBreak()">Short Break</button>
+        <button onclick="setLongBreak()">Long Break</button>
+      </div>
+
       <div id="time">
         <span id="hh" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 99)">00</span>
         <span>:</span>
@@ -144,6 +161,7 @@
     const ss = document.getElementById("ss");
     const alarmSound = document.getElementById("alarmSound");
     const titleElement = document.getElementById("timerTitle");
+    const presetButtons = document.getElementById("presetButtons");
 
     let timer = null;
     let currentMode = 'pomodoro';
@@ -155,12 +173,10 @@
         e.preventDefault();
         return;
       }
-
       const selection = window.getSelection();
-      const node = e.target;
-      const text = node.textContent || "";
+      const text = e.target.textContent || "";
       const isTextSelected = selection && selection.toString().length > 0;
-      if (text.length >= 2 && !isTextSelected && /^[0-9]$/.test(e.key)) {
+      if (text.length >= 2 && !isTextSelected) {
         e.preventDefault();
       }
     }
@@ -203,14 +219,18 @@
       btn.classList.add('active');
 
       if (mode === 'pomodoro') {
-        setTimeFromSeconds(25 * 60);
+        setPomodoro();
         enableEditing(true);
+        presetButtons.style.display = 'flex';
       } else if (mode === 'countdown') {
         setTimeFromSeconds(0);
         enableEditing(true);
+        presetButtons.style.display = 'none';
       } else if (mode === 'countup') {
         setTimeFromSeconds(0);
+        countUpTime = 0;
         enableEditing(false);
+        presetButtons.style.display = 'none';
       }
     }
 
@@ -218,6 +238,21 @@
       [hh, mm, ss].forEach(span => {
         span.setAttribute("contenteditable", enabled ? "true" : "false");
       });
+    }
+
+    function setPomodoro() {
+      pauseTimer();
+      setTimeFromSeconds(25 * 60);
+    }
+
+    function setShortBreak() {
+      pauseTimer();
+      setTimeFromSeconds(5 * 60);
+    }
+
+    function setLongBreak() {
+      pauseTimer();
+      setTimeFromSeconds(15 * 60);
     }
 
     function startTimer() {
@@ -251,12 +286,10 @@
     function resetTimer() {
       pauseTimer();
       if (currentMode === 'pomodoro') {
-        setTimeFromSeconds(25 * 60);
+        setPomodoro();
       } else {
         setTimeFromSeconds(0);
-      }
-      if (currentMode === 'countup') {
-        countUpTime = 0;
+        if (currentMode === 'countup') countUpTime = 0;
       }
     }
 
@@ -266,6 +299,7 @@
 
     window.onload = () => {
       document.querySelectorAll('.sidebar button')[0].classList.add('active');
+      selectTimer('pomodoro', document.querySelector('.sidebar button'));
     };
   </script>
 </body>
