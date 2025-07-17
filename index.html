@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2N4DJX0R4B"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag() { dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-2N4DJX0R4B');
-  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FreeOnlineTimer.net</title>
@@ -62,7 +55,7 @@
     .timer-box {
       background: var(--box-bg);
       padding: 60px;
-      width: 600px;
+      width: 700px;
       border-radius: 25px;
       box-shadow: 0 0 20px rgba(0,0,0,0.15);
       text-align: center;
@@ -71,8 +64,21 @@
     #time {
       font-size: 120px;
       margin: 40px 0;
-      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .time-part {
+      display: inline-block;
+      width: 140px;
+      text-align: center;
       outline: none;
+      border: none;
+      white-space: nowrap;
+      overflow: hidden;
+      font-family: monospace;
     }
 
     button {
@@ -120,34 +126,72 @@
         <button onclick="pauseTimer()">Pause</button>
         <button onclick="resetTimer()">Reset</button>
       </div>
-      <div id="time" contenteditable="true" onblur="saveEditedTime()" onkeydown="handleTimeKey(event)" title="Click to edit">25:00</div>
+      <div id="time">
+        <span id="hh" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 99)">00</span>
+        <span>:</span>
+        <span id="mm" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 59)">25</span>
+        <span>:</span>
+        <span id="ss" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 59)">00</span>
+      </div>
     </div>
   </div>
+
   <audio id="alarmSound" src="https://www.soundjay.com/button/sounds/beep-07.mp3" preload="auto"></audio>
 
   <script>
-    const timeDisplay = document.getElementById("time");
+    const hh = document.getElementById("hh");
+    const mm = document.getElementById("mm");
+    const ss = document.getElementById("ss");
     const alarmSound = document.getElementById("alarmSound");
     const titleElement = document.getElementById("timerTitle");
 
-    const modes = {
-      pomodoro: 25 * 60,
-      shortBreak: 5 * 60,
-      longBreak: 15 * 60,
-      countdown: 0,
-      countup: 0
-    };
-
-    let currentMode = 'pomodoro';
-    let secondsLeft = modes[currentMode];
     let timer = null;
+    let currentMode = 'pomodoro';
     let countUpTime = 0;
+
+    function restrictNumbers(e) {
+      const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+      if (!/^[0-9]$/.test(e.key) && !allowed.includes(e.key)) {
+        e.preventDefault();
+        return;
+      }
+
+      const selection = window.getSelection();
+      const node = e.target;
+      const text = node.textContent || "";
+      const isTextSelected = selection && selection.toString().length > 0;
+      if (text.length >= 2 && !isTextSelected && /^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+      }
+    }
+
+    function validateTimeField(field, max) {
+      let val = parseInt(field.textContent || "0", 10);
+      if (isNaN(val) || val < 0) val = 0;
+      if (val > max) val = max;
+      field.textContent = String(val).padStart(2, '0');
+    }
+
+    function getTotalSeconds() {
+      const h = parseInt(hh.textContent || "0", 10) || 0;
+      const m = parseInt(mm.textContent || "0", 10) || 0;
+      const s = parseInt(ss.textContent || "0", 10) || 0;
+      return h * 3600 + m * 60 + s;
+    }
+
+    function setTimeFromSeconds(total) {
+      let h = Math.floor(total / 3600);
+      let m = Math.floor((total % 3600) / 60);
+      let s = total % 60;
+      hh.textContent = String(h).padStart(2, '0');
+      mm.textContent = String(m).padStart(2, '0');
+      ss.textContent = String(s).padStart(2, '0');
+    }
 
     function selectTimer(mode, btn) {
       currentMode = mode;
       pauseTimer();
 
-      // update title
       const titleMap = {
         pomodoro: 'Pomodoro Timer',
         countdown: 'Countdown Timer',
@@ -155,38 +199,25 @@
       };
       titleElement.textContent = titleMap[mode];
 
-      // visually highlight selected button
       document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       if (mode === 'pomodoro') {
-        secondsLeft = modes.pomodoro;
-        timeDisplay.setAttribute("contenteditable", "true");
+        setTimeFromSeconds(25 * 60);
+        enableEditing(true);
       } else if (mode === 'countdown') {
-        secondsLeft = 0;
-        timeDisplay.textContent = "00:00";
-        timeDisplay.setAttribute("contenteditable", "true");
+        setTimeFromSeconds(0);
+        enableEditing(true);
       } else if (mode === 'countup') {
-        countUpTime = 0;
-        timeDisplay.textContent = "00:00";
-        timeDisplay.setAttribute("contenteditable", "false");
+        setTimeFromSeconds(0);
+        enableEditing(false);
       }
-
-      updateDisplay();
     }
 
-    function formatTime(seconds) {
-      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-      const secs = String(seconds % 60).padStart(2, '0');
-      return `${mins}:${secs}`;
-    }
-
-    function updateDisplay() {
-      if (currentMode === 'countup') {
-        timeDisplay.textContent = formatTime(countUpTime);
-      } else {
-        timeDisplay.textContent = formatTime(secondsLeft);
-      }
+    function enableEditing(enabled) {
+      [hh, mm, ss].forEach(span => {
+        span.setAttribute("contenteditable", enabled ? "true" : "false");
+      });
     }
 
     function startTimer() {
@@ -194,13 +225,14 @@
       if (currentMode === 'countup') {
         timer = setInterval(() => {
           countUpTime++;
-          updateDisplay();
+          setTimeFromSeconds(countUpTime);
         }, 1000);
       } else {
+        let seconds = getTotalSeconds();
         timer = setInterval(() => {
-          if (secondsLeft > 0) {
-            secondsLeft--;
-            updateDisplay();
+          if (seconds > 0) {
+            seconds--;
+            setTimeFromSeconds(seconds);
           } else {
             clearInterval(timer);
             timer = null;
@@ -219,53 +251,22 @@
     function resetTimer() {
       pauseTimer();
       if (currentMode === 'pomodoro') {
-        secondsLeft = modes.pomodoro;
-      } else if (currentMode === 'countdown') {
-        secondsLeft = 0;
-      } else if (currentMode === 'countup') {
+        setTimeFromSeconds(25 * 60);
+      } else {
+        setTimeFromSeconds(0);
+      }
+      if (currentMode === 'countup') {
         countUpTime = 0;
       }
-      updateDisplay();
     }
 
     function toggleDarkMode() {
       document.body.classList.toggle("dark-mode");
     }
 
-    function handleTimeKey(event) {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        timeDisplay.blur();
-      }
-    }
-
-    function saveEditedTime() {
-      if (currentMode === 'countup') return;
-
-      const text = timeDisplay.textContent.trim();
-      const match = text.match(/^(\d{1,2}):(\d{2})$/);
-      if (!match) {
-        updateDisplay();
-        return;
-      }
-
-      const mins = parseInt(match[1], 10);
-      const secs = parseInt(match[2], 10);
-      if (isNaN(mins) || isNaN(secs) || secs > 59) {
-        updateDisplay();
-        return;
-      }
-
-      secondsLeft = mins * 60 + secs;
-      updateDisplay();
-    }
-
-    // Set initial active button
     window.onload = () => {
       document.querySelectorAll('.sidebar button')[0].classList.add('active');
     };
-
-    updateDisplay();
   </script>
 </body>
 </html>
