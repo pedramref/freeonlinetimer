@@ -48,6 +48,10 @@
       gap: 10px;
     }
 
+    .sidebar button.active {
+      background-color: var(--button-active);
+    }
+
     .main-content {
       flex-grow: 1;
       display: flex;
@@ -104,9 +108,9 @@
 <body>
   <button class="toggle-dark" onclick="toggleDarkMode()">Toggle Dark Mode</button>
   <div class="sidebar">
-    <button onclick="selectTimer('pomodoro')">Pomodoro Timer</button>
-    <button onclick="selectTimer('countdown')">Countdown Timer</button>
-    <button onclick="selectTimer('countup')">Count Up Timer</button>
+    <button onclick="selectTimer('pomodoro', this)">Pomodoro Timer</button>
+    <button onclick="selectTimer('countdown', this)">Countdown Timer</button>
+    <button onclick="selectTimer('countup', this)">Count-Up Timer</button>
   </div>
   <div class="main-content">
     <div class="timer-box">
@@ -139,16 +143,21 @@
     let timer = null;
     let countUpTime = 0;
 
-    function selectTimer(mode) {
+    function selectTimer(mode, btn) {
       currentMode = mode;
       pauseTimer();
 
+      // update title
       const titleMap = {
         pomodoro: 'Pomodoro Timer',
         countdown: 'Countdown Timer',
-        countup: 'Count Up Timer'
+        countup: 'Count-Up Timer'
       };
       titleElement.textContent = titleMap[mode];
+
+      // visually highlight selected button
+      document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
       if (mode === 'pomodoro') {
         secondsLeft = modes.pomodoro;
@@ -250,6 +259,11 @@
       secondsLeft = mins * 60 + secs;
       updateDisplay();
     }
+
+    // Set initial active button
+    window.onload = () => {
+      document.querySelectorAll('.sidebar button')[0].classList.add('active');
+    };
 
     updateDisplay();
   </script>
