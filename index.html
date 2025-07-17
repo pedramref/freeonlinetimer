@@ -110,7 +110,7 @@
   </div>
   <div class="main-content">
     <div class="timer-box">
-      <h2 style="font-size: 32px;">FreeOnlineTimer.net</h2>
+      <h2 id="timerTitle" style="font-size: 32px;">Pomodoro Timer</h2>
       <div class="mode-buttons">
         <button onclick="startTimer()">Start</button>
         <button onclick="pauseTimer()">Pause</button>
@@ -124,6 +124,7 @@
   <script>
     const timeDisplay = document.getElementById("time");
     const alarmSound = document.getElementById("alarmSound");
+    const titleElement = document.getElementById("timerTitle");
 
     const modes = {
       pomodoro: 25 * 60,
@@ -141,6 +142,14 @@
     function selectTimer(mode) {
       currentMode = mode;
       pauseTimer();
+
+      const titleMap = {
+        pomodoro: 'Pomodoro Timer',
+        countdown: 'Countdown Timer',
+        countup: 'Count Up Timer'
+      };
+      titleElement.textContent = titleMap[mode];
+
       if (mode === 'pomodoro') {
         secondsLeft = modes.pomodoro;
         timeDisplay.setAttribute("contenteditable", "true");
@@ -153,6 +162,8 @@
         timeDisplay.textContent = "00:00";
         timeDisplay.setAttribute("contenteditable", "false");
       }
+
+      updateDisplay();
     }
 
     function formatTime(seconds) {
