@@ -71,14 +71,13 @@
     }
 
     .time-part {
-      display: inline-block;
-      width: 140px;
+      width: 120px;
       text-align: center;
-      outline: none;
-      border: none;
-      white-space: nowrap;
-      overflow: hidden;
+      font-size: 100px;
       font-family: monospace;
+      border: none;
+      background: transparent;
+      color: var(--text-color);
     }
 
     button {
@@ -130,7 +129,7 @@
   <div class="main-content">
     <div class="timer-box">
       <h2 id="timerTitle" style="font-size: 32px;">Pomodoro Timer</h2>
-      
+
       <div class="mode-buttons">
         <button onclick="startTimer()">Start</button>
         <button onclick="pauseTimer()">Pause</button>
@@ -144,11 +143,11 @@
       </div>
 
       <div id="time">
-        <span id="hh" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 99)">00</span>
+        <input id="hh" class="time-part" maxlength="2" value="00" onblur="validateTimeField(this, 99)">
         <span>:</span>
-        <span id="mm" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 59)">25</span>
+        <input id="mm" class="time-part" maxlength="2" value="25" onblur="validateTimeField(this, 59)">
         <span>:</span>
-        <span id="ss" class="time-part" contenteditable="true" onkeydown="restrictNumbers(event)" onblur="validateTimeField(this, 59)">00</span>
+        <input id="ss" class="time-part" maxlength="2" value="00" onblur="validateTimeField(this, 59)">
       </div>
     </div>
   </div>
@@ -167,31 +166,17 @@
     let currentMode = 'pomodoro';
     let countUpTime = 0;
 
-    function restrictNumbers(e) {
-      const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-      if (!/^[0-9]$/.test(e.key) && !allowed.includes(e.key)) {
-        e.preventDefault();
-        return;
-      }
-      const selection = window.getSelection();
-      const text = e.target.textContent || "";
-      const isTextSelected = selection && selection.toString().length > 0;
-      if (text.length >= 2 && !isTextSelected) {
-        e.preventDefault();
-      }
-    }
-
     function validateTimeField(field, max) {
-      let val = parseInt(field.textContent || "0", 10);
+      let val = parseInt(field.value || "0", 10);
       if (isNaN(val) || val < 0) val = 0;
       if (val > max) val = max;
-      field.textContent = String(val).padStart(2, '0');
+      field.value = String(val).padStart(2, '0');
     }
 
     function getTotalSeconds() {
-      const h = parseInt(hh.textContent || "0", 10) || 0;
-      const m = parseInt(mm.textContent || "0", 10) || 0;
-      const s = parseInt(ss.textContent || "0", 10) || 0;
+      const h = parseInt(hh.value || "0", 10) || 0;
+      const m = parseInt(mm.value || "0", 10) || 0;
+      const s = parseInt(ss.value || "0", 10) || 0;
       return h * 3600 + m * 60 + s;
     }
 
@@ -199,9 +184,9 @@
       let h = Math.floor(total / 3600);
       let m = Math.floor((total % 3600) / 60);
       let s = total % 60;
-      hh.textContent = String(h).padStart(2, '0');
-      mm.textContent = String(m).padStart(2, '0');
-      ss.textContent = String(s).padStart(2, '0');
+      hh.value = String(h).padStart(2, '0');
+      mm.value = String(m).padStart(2, '0');
+      ss.value = String(s).padStart(2, '0');
     }
 
     function selectTimer(mode, btn) {
@@ -220,24 +205,11 @@
 
       if (mode === 'pomodoro') {
         setPomodoro();
-        enableEditing(true);
         presetButtons.style.display = 'flex';
-      } else if (mode === 'countdown') {
+      } else {
         setTimeFromSeconds(0);
-        enableEditing(true);
-        presetButtons.style.display = 'none';
-      } else if (mode === 'countup') {
-        setTimeFromSeconds(0);
-        countUpTime = 0;
-        enableEditing(false);
         presetButtons.style.display = 'none';
       }
-    }
-
-    function enableEditing(enabled) {
-      [hh, mm, ss].forEach(span => {
-        span.setAttribute("contenteditable", enabled ? "true" : "false");
-      });
     }
 
     function setPomodoro() {
@@ -258,6 +230,7 @@
     function startTimer() {
       if (timer) return;
       if (currentMode === 'countup') {
+        countUpTime = getTotalSeconds(); // start from user input
         timer = setInterval(() => {
           countUpTime++;
           setTimeFromSeconds(countUpTime);
@@ -289,7 +262,6 @@
         setPomodoro();
       } else {
         setTimeFromSeconds(0);
-        if (currentMode === 'countup') countUpTime = 0;
       }
     }
 
